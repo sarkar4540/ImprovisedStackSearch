@@ -1,12 +1,6 @@
 import json
 
 
-def get_statement():
-    """Fetches the problem statement by user input"""
-    # TODO: return the problem statement by taking input from the user
-    return "Keyword extraction using NLTK from a sentence"
-
-
 def get_keywords(sentence):
     """Fetches the keywords of the given sentence"""
     # TODO: detect the keywords using NLTK, and corpus stopwords, from the sentence and return the array of keywords
@@ -15,8 +9,11 @@ def get_keywords(sentence):
 
 def space_separated_elements(array):
     """Converts the question_tags array to a space separated string"""
-    # TODO: return a string containing all the elements of the array, separated by a space
-    return "keyword extraction nltk sentence"
+    string = "";
+    for element in array:
+        string = string + element + " "
+
+    return string
 
 
 def get_questions_stackoverflow(query):
@@ -129,5 +126,5 @@ if "items" in result_json_q:
             break
     index = 1
     for key in keys_sorted_by_value(answer_scores):
-        print index + "." + answer_bodies[key] + "\n"
+        print (index + "." + answer_bodies[key] + "\n")
         index = index + 1
