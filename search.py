@@ -1,130 +1,152 @@
 import json
+import re
+from flask import Flask
+
+from ibm_watson import NaturalLanguageUnderstandingV1
+from ibm_watson.natural_language_understanding_v1 import Features, KeywordsOptions, SentimentOptions
+from stackapi import StackAPI
+import networkx as nx
+
+nlu = NaturalLanguageUnderstandingV1(
+    iam_apikey="1A3R_SmipU_wkdOjJRwSxZPmn6dIgriROn4M6zngTR3v", version="2018-11-16",
+    url="https://gateway-lon.watsonplatform.net/natural-language-understanding/api")
+
+app = Flask(__name__)
 
 
 def get_keywords(sentence):
     """Fetches the keywords of the given sentence"""
-    # TODO: detect the keywords using NLTK, and corpus stopwords, from the sentence and return the array of keywords
-    return ["keyword", "extraction", "nltk", "sentence"]
+    keywords = []
+    response = nlu.analyze(
+        text=sentence,
+        language="en",
+        features=Features(keywords=KeywordsOptions())).get_result()
+    for keyword_obj in response['keywords']:
+        keywords.append(keyword_obj["text"].lower())
+    return separate_elements(keywords)
 
 
 def space_separated_elements(array):
     """Converts the question_tags array to a space separated string"""
-    string = "";
+    string = ""
     for element in array:
         string = string + element + " "
 
     return string
 
 
-def get_questions_stackoverflow(query):
+def separate_elements(array):
+    list_a = []
+    for element in array:
+        list_a.extend(element.split(" "))
+    return list_a
+
+
+def get_questions_stackoverflow(query, mincount):
     """Fetches the questions from Stackoverflow API using the query provided"""
-    # TODO: get the relevant questions from Stackoverflow API search by using query as q and sort by activity,
-    #  in descending order and return the response as json object (dict)
-    return json.loads(
-        '{"items":[{"tags":["python","nlp","nltk"],"owner":{"reputation":1825,"user_id":436441,"user_type":"registered","accept_rate":80,"profile_image":"https://i.stack.imgur.com/g4GtM.jpg?s=128&g=1","display_name":"waigani","link":"https://stackoverflow.com/users/436441/waigani"},"is_answered":true,"view_count":11892,"answer_count":3,"score":5,"last_activity_date":1540208156,"creation_date":1341894786,"last_edit_date":1341896827,"question_id":11406657,"link":"https://stackoverflow.com/questions/11406657/python-nltk-keyword-extraction-from-sentence","title":"python nltk keyword extraction from sentence"},{"tags":["python","algorithm","machine-learning","nlp"],"owner":{"reputation":98,"user_id":1684021,"user_type":"registered","accept_rate":0,"profile_image":"https://www.gravatar.com/avatar/c32dd263478a6fc8ce85452348b27cd2?s=128&d=identicon&r=PG","display_name":"Coeus2016","link":"https://stackoverflow.com/users/1684021/coeus2016"},"is_answered":true,"view_count":2873,"answer_count":1,"score":4,"last_activity_date":1460498288,"creation_date":1460320212,"last_edit_date":1460483248,"question_id":36535206,"link":"https://stackoverflow.com/questions/36535206/name-entity-resolution-algorithm","title":"Name Entity Resolution Algorithm"},{"tags":["python","nlp","nltk","tf-idf"],"owner":{"reputation":1825,"user_id":436441,"user_type":"registered","accept_rate":80,"profile_image":"https://i.stack.imgur.com/g4GtM.jpg?s=128&g=1","display_name":"waigani","link":"https://stackoverflow.com/users/436441/waigani"},"is_answered":true,"view_count":1526,"accepted_answer_id":11550101,"answer_count":1,"score":1,"last_activity_date":1342728786,"creation_date":1342553051,"last_edit_date":1495542473,"question_id":11529424,"link":"https://stackoverflow.com/questions/11529424/implementing-idf-with-nltk","title":"Implementing idf with nltk"}],"has_more":false,"quota_max":300,"quota_remaining":270}')
-
-
-def get_all_paths(nodes, edges, source, destination):
-    """Finds the possible paths between the source and destination nodes, in the graph depicted by nodes and edges."""
-    # TODO: find the paths possible between two nodes and return as list of list of traversed nodes
-    return []
-
-
-def keys_sorted_by_value(dictionary):
-    """Sorts the dictionary in descending order of values and returns an array containing keys"""
-    # TODO: return an array containing the keys of the dictionary sorted by the value corresponding
-    #  to the key in descending order
-    return []
+    stack = StackAPI("stackoverflow")
+    res = stack.fetch("search/advanced", q=query, sort="relevance", accepted=True, pagesize=mincount, max_pages=1,
+                      filter="withbody")
+    return res
 
 
 def get_answers_stackoverflow(question_id):
     """Fetches the answers from Stackoverflow API using the question_id provided"""
-    # TODO: get the answers from Stackoverflow API by using the provided question_id and sort by rating,
-    #  in descending order and return the response as json object (dict)
-    return json.loads("{}")
+    stack = StackAPI("stackoverflow")
+    res = stack.fetch("questions/{ids}/answers", ids=[question_id], sort="votes", filter="withbody")
+    return res
 
 
-def get_comments_stackoverflow(question_id):
+def get_comments_stackoverflow(answer_id):
     """Fetches the comments from Stackoverflow API using the answer_id provided"""
-    # TODO: get the comments from Stackoverflow API by using the provided answer_id
-    # and return the response as json object (dict)
-    return json.loads("{}")
+    stack = StackAPI("stackoverflow")
+    res = stack.fetch("answers/{ids}/comments", ids=[answer_id], sort="creation", filter="withbody")
+    return res
 
 
-def analyse_compound_sentiment(sentence):
+def analyse_sentiment(sentence):
     """Calculates the compound index of the sentence using NLTK Vader SentimentAnalyser"""
-    # TODO: returns the compound index of sentiment analysis over the statement using NLTK Vader
-    return 0.5
+    response = nlu.analyze(
+        text=sentence,
+        language="en",
+        sentiment=SentimentOptions()).get_result()
+    return float(response["sentiment"]["document"]["score"])
 
 
-question = input("Enter the problem statement: ")
-question_tags = get_keywords(question)
-query = space_separated_elements(question_tags)
-result_json_q = get_questions_stackoverflow(query)
-if "items" in result_json_q:
-    questions_tags = {}
+@app.route("/<int:answer_limit>/<question>")
+def search(answer_limit, question):
+    question_tags = get_keywords(question)
+    print("Extracted tags: ", end="")
+    print(question_tags)
     edges = []
     nodes = []
-    for question_b in result_json_q["items"]:
-        tags = question_b["tags"]
-        """if "body" in question_b:
-            tags = get_keywords(question_b["body"])
-        elif "tags" in question_b:
-            tags= question_b["tags"]
-        else:
-            tags = get_keywords(question_b["title"])"""
-        questions_tags[question_b["question_id"]] = tags
-        for tag1 in tags:
-            if not (tag1 in nodes):
-                nodes.append(tag1)
-            for tag2 in tags:
-                if not (tag1 is tag2):
-                    edges.append((tag1, tag2))
-    print(edges)
-    print(nodes)
+    questions = {}
+    result_json_q = (get_questions_stackoverflow(
+        space_separated_elements(question_tags), answer_limit))
+    if "items" in result_json_q:
+        print("Got " + str(len(result_json_q["items"])) + " questions... processing.")
+        questions_tags = {}
+        for question_b in result_json_q["items"]:
+            tags = list(set(get_keywords(question_b["title"])) | set(question_b["tags"]))
+            questions_tags[question_b["question_id"]] = tags
+            questions[question_b["question_id"]] = question_b;
+            for tag1 in tags:
+                if not (tag1 in nodes):
+                    nodes.append(tag1)
+                for tag2 in tags:
+                    if not (tag1 is tag2):
+                        edges.append((tag1, tag2))
+    print("Ranking questions... ", end="")
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    graph.add_edges_from(edges)
     probable_paths = []
-    for source in question_tags:
+    for source in re.findall(r'\w+', question):
         for destination in question_tags:
             if not (source is destination) and (source in nodes) and (destination in nodes):
-                paths = get_all_paths(nodes, edges, source, destination)
-                for path in paths:
-                    flag = True
-                    for tag in question_tags:
-                        if (not (source is tag)) and (not (destination is tag)):
-                            flag = flag and tag in path
-                    if flag:
-                        probable_paths.append(path)
+                probable_paths.extend(nx.all_shortest_paths(graph, source, destination))
+
     question_scores = {}
     for question_b in result_json_q["items"]:
-        score = 0
+        score = 0.0
+        tag_count = 0.0
         for path in probable_paths:
             tags = questions_tags.get(question_b["question_id"])
             for tag in tags:
                 if tag in path:
                     score = score + 1
-        question_scores[question_b["question_id"]] = score
-
-    k = input("Enter the number of answers (k): ")
+                tag_count = tag_count + 1
+        question_scores[question_b["question_id"]] = 0 if tag_count == 0 else score / tag_count
+    print("Done.")
+    print("Ranking answers based on comments...", end="")
     index = 0
     answer_scores = {}
-    answer_bodies = {}
-    for key in keys_sorted_by_value(question_scores):
+    answers = {}
+    for key in sorted(question_scores, key=question_scores.get):
         t_answer = get_answers_stackoverflow(key)
         for answer in t_answer["items"]:
             score = 0.0
             count = 0
             t_comments = get_comments_stackoverflow(key)
             for comment in t_comments["items"]:
-                score = score + analyse_compound_sentiment(comment)
+                score = score + analyse_sentiment(comment)
                 count = count + 1
-            answer_scores[answer["answer_id"]] = score / count
-            answer_bodies[answer["answer_id"]] = answer["body"]
+            answer_scores[answer["answer_id"]] = 0 if count == 0 else score / count
+            answers[answer["answer_id"]] = answer
             index = index + 1
-            if index >= k:
+            if index >= answer_limit:
                 break
-        if index >= k:
+        if index >= answer_limit:
             break
-    index = 1
-    for key in keys_sorted_by_value(answer_scores):
-        print (index + "." + answer_bodies[key] + "\n")
-        index = index + 1
+    print("Done.")
+    print("Answers found:")
+    results = []
+    for key in sorted(answer_scores, key=answer_scores.get):
+        results.append((questions[answers[key]["question_id"]]["title"], answers[key]["body"]))
+
+    return json.dumps(results)
+
+
+question = input("Enter the search string:")
+k = input("Enter number of answers:")
+print(search(int(k), question))
