@@ -7,6 +7,8 @@ from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_watson.natural_language_understanding_v1 import Features, KeywordsOptions, SentimentOptions
 from stackapi import StackAPI
 
+stack = StackAPI("stackoverflow")
+
 nlu = NaturalLanguageUnderstandingV1(
     iam_apikey="1A3R_SmipU_wkdOjJRwSxZPmn6dIgriROn4M6zngTR3v", version="2018-11-16",
     url="https://gateway-lon.watsonplatform.net/natural-language-understanding/api")
@@ -43,23 +45,26 @@ def separate_elements(array):
 
 
 def get_questions_stackoverflow(query):
+    stack.page_size = 50
+    stack.max_pages = 1
     """Fetches the questions from Stackoverflow API using the query provided"""
-    stack = StackAPI("stackoverflow")
     res = stack.fetch("search/advanced", q=query, sort="relevance", accepted=True,
                       filter="withbody")
     return res
 
 
 def get_answers_stackoverflow(question_ids):
+    stack.page_size = 100
+    stack.max_pages = 1
     """Fetches the answers from Stackoverflow API using the question_id provided"""
-    stack = StackAPI("stackoverflow")
     res = stack.fetch("questions/{ids}/answers", ids=question_ids, sort="votes", filter="withbody")
     return res
 
 
 def get_comments_stackoverflow(answer_ids):
+    stack.page_size = 100
+    stack.max_pages = 1
     """Fetches the comments from Stackoverflow API using the answer_id provided"""
-    stack = StackAPI("stackoverflow")
     res = stack.fetch("answers/{ids}/comments", ids=answer_ids, sort="creation", filter="withbody")
     return res
 
@@ -73,8 +78,12 @@ def analyse_sentiment(sentence):
     return float(response["sentiment"]["document"]["score"])
 
 
-@app.route("/<int:answer_limit>/<query>")
-def search(answer_limit, query):
+@app.route("/<query>/<answer_limit>")
+def search(query=None, answer_limit=50):
+    if isinstance(answer_limit, str):
+        answer_limit = int(answer_limit)
+    if query is None:
+        return json.dumps({"error": "Enter a query to search."})
     question_tags = get_keywords(query)
     print("Extracted tags: ", end="")
     print(question_tags)
@@ -161,8 +170,3 @@ def search(answer_limit, query):
         print("Done.")
 
         return json.dumps(results)
-
-
-questionq = input("Enter the search string:")
-k = input("Enter number of answers(max 50):")
-print(search(50 if int(k) > 50 else int(k), questionq))
