@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 import networkx as nx
@@ -12,6 +13,8 @@ stack = StackAPI("stackoverflow")
 nlu = NaturalLanguageUnderstandingV1(
     iam_apikey="1A3R_SmipU_wkdOjJRwSxZPmn6dIgriROn4M6zngTR3v", version="2018-11-16",
     url="https://gateway-lon.watsonplatform.net/natural-language-understanding/api")
+
+port = int(os.getenv('PORT', 5000))
 
 app = Flask(__name__)
 
@@ -170,3 +173,7 @@ def search(query=None, answer_limit=50):
         print("Done.")
 
         return json.dumps(results)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=port, debug=True)
