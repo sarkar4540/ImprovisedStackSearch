@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat&display=swap');
+#div1 {
+	font-family: 'Montserrat', sans-serif;
+	width:800px;
+	position: relative;
+	top: 50vh;
+  left: 50vw;
+  transform: translate(-50%, -50%);
+}
+#div1>form>input[type=text]{
+	width: 690px;
+	height:32px;
+	border-radius: 5px;
+	font-size: 20px;
+}
+
+#div1>h1{
+	color:white;
+	display: inline-block;
+}
+#div1>span{
+	color:white;
+
+}
+#resultsdiv{
+	padding:15px;
+	border-radius:5px;
+	font-family: 'Montserrat', sans-serif;
+	width:800px;
+	position: relative;
+	margin:0 auto;
+}
+
+#resultsdiv > #res_close_btn{
+	position: fixed;
+	left:10px;
+	top:10px;
+	cursor: pointer;
+	width: 90px;
+	text-align: center;
+	background-color: #2255ff99;
+	height:27px;
+	border-radius: 5px;
+	padding:5px;
+	border: 0;
+	margin: 0;
+	color: #fff;
+	font-size: 20px;
+	display: inline-block;
+	transition: 0.2s ease-in-out all;
+}
+#resultsdiv > #res_close_btn:hover{
+	background-color: #0033ffff;
+}
+#resultsdiv .entry{
+	text-align: left;
+	padding:15px;
+	border-radius:5px;
+	font-family: 'Montserrat', sans-serif;
+	background:rgba(255,255,255,0.8);
+	margin:5px;
+}
+
+.entry .question_title{
+text-align: center;
+font-size: 20px;
+border-bottom:1px solid;
+padding-bottom: 5px;
+}
+
+.entry .answer_body{
+font-size: 18px;
+border-bottom:1px solid;
+padding: 5px;
+}
+
+.entry .answer_link{
+margin-top: 15px;
+font-size: 18px;
+text-align: right;
+
+}
+
+.entry .answer_link a{
+	text-decoration: none;
+	color: #000;
+	background-color: #2255ff99;
+	border-radius: 5px;
+	padding:5px;
+
+}
+
+.answer_link a:hover{
+	background-color: #0033ffff;
+}
+
+#div1>form>div{
+	cursor: pointer;
+	width: 90px;
+	text-align: center;
+	background-color: #2255ff99;
+	height:27px;
+	border-radius: 5px;
+	padding:5px;
+	border: 0;
+	margin: 0;
+	color: #fff;
+	font-size: 20px;
+	display: inline-block;
+	transition: 0.2s ease-in-out all;
+}
+#div1>form>div:hover{
+	background-color: #0033ffff;
+}
+body{
+	background : url('https://i.ytimg.com/vi/-MKapbz0GIo/maxresdefault.jpg' );
+	background-size: cover;
+}
