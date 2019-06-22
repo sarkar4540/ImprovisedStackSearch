@@ -3,32 +3,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from builtins import int
-from builtins import range
-from builtins import str
-
-from future import standard_library
-
-standard_library.install_aliases()
 import json
 import os
 import re
+from datetime import timedelta
+from functools import update_wrapper
 
 import networkx as nx
-from flask import Flask
+from flask import Flask, make_response, request, current_app
+from future import standard_library
 from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_watson.natural_language_understanding_v1 import Features, KeywordsOptions, SentimentOptions
 from stackapi import StackAPI
+
+app = Flask(__name__)
+
+standard_library.install_aliases()
 
 stack = StackAPI("stackoverflow")
 
 nlu = NaturalLanguageUnderstandingV1(
     iam_apikey="1A3R_SmipU_wkdOjJRwSxZPmn6dIgriROn4M6zngTR3v", version="2018-11-16",
     url="https://gateway-lon.watsonplatform.net/natural-language-understanding/api")
-
-port = int(os.getenv('PORT', 5000))
-
-app = Flask(__name__)
 
 
 def get_keywords(sentence):
@@ -93,10 +89,51 @@ def analyse_sentiment(sentence):
     return float(response["sentiment"]["document"]["score"])
 
 
+def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_to_all=True, automatic_options=True):
+    if methods is not None:
+        methods = ', '.join(sorted(x.upper() for x in methods))
+    if headers is not None and not isinstance(headers, str):
+        headers = ', '.join(x.upper() for x in headers)
+    if not isinstance(origin, str):
+        origin = ', '.join(origin)
+    if isinstance(max_age, timedelta):
+        max_age = max_age.total_seconds()
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = current_app.make_default_options_response()
+        return options_resp.headers['allow']
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
+            else:
+                resp = make_response(f(*args, **kwargs))
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str(max_age)
+            if headers is not None:
+                h['Access-Control-Allow-Headers'] = headers
+            return resp
+
+        f.provide_automatic_options = False
+        return update_wrapper(wrapped_function, f)
+
+    return decorator
+
+
 @app.route("/<query>/<answer_limit>")
+@crossdomain(origin='*')
 def search(query=None, answer_limit=50):
-    if isinstance(answer_limit, str):
-        answer_limit = int(answer_limit)
+    answer_limit = int(answer_limit)
     if query is None:
         return json.dumps({"error": "Enter a query to search."})
     question_tags = get_keywords(query)
@@ -117,9 +154,9 @@ def search(query=None, answer_limit=50):
         for question_b in result_json_q["items"]:
             if isinstance(question_b, dict):
                 tags = list(set(get_keywords(question_b["title"])) | set(question_b["tags"]))
-                questions_tags[question_b["question_id"]] = tags
-                questions[question_b["question_id"]] = question_b
-                questions[question_b["question_id"]]["answer_scores"] = {}
+                questions_tags[int(question_b["question_id"])] = tags
+                questions[int(question_b["question_id"])] = question_b
+                questions[int(question_b["question_id"])]["answer_scores"] = {}
                 for tag1 in tags:
                     if not (tag1 in nodes):
                         nodes.append(tag1)
@@ -140,37 +177,39 @@ def search(query=None, answer_limit=50):
             score = 0.0
             tag_count = 0.0
             for path in probable_paths:
-                tags = questions_tags.get(question_b["question_id"])
+                tags = questions_tags[int(question_b["question_id"])]
                 for tag in tags:
                     if tag in path:
                         score = score + 1
                     tag_count = tag_count + 1
-            question_scores[question_b["question_id"]] = 0 if tag_count == 0 else score / tag_count
+            question_scores[int(question_b["question_id"])] = 0 if tag_count == 0 else score / tag_count
 
         print("Done.")
         print("Ranking answers based on comments...")
         answers = {}
-        questions_sorted = sorted(question_scores, key=question_scores.get, reverse=True)[:answer_limit]
+        questions_sorted = sorted(question_scores, key=lambda ind: int(question_scores.get(ind) * 10000), reverse=True)[
+                           :answer_limit]
         result_json_a = get_answers_stackoverflow(questions_sorted)
         for answer in result_json_a["items"]:
-            answers[answer["answer_id"]] = answer
+            answers[int(answer["answer_id"])] = answer
         result_json_c = get_comments_stackoverflow(answers.keys())
         comments = {}
         for comment in result_json_c["items"]:
             if comment["post_id"] in comments:
-                comments[comment["post_id"]].append(comment)
+                comments[int(comment["post_id"])].append(comment)
             else:
-                comments[comment["post_id"]] = [comment]
+                comments[int(comment["post_id"])] = [comment]
 
         for answer in answers.values():
             score = 0.0
             count = 0
-            if answer["answer_id"] in comments.keys():
-                t_comments = comments[answer["answer_id"]]
+            if int(answer["answer_id"]) in comments.keys():
+                t_comments = comments[int(answer["answer_id"])]
                 for comment in t_comments:
                     score = score + analyse_sentiment(comment["body"])
                     count = count + 1
-            questions[answer["question_id"]]["answer_scores"][answer["answer_id"]] = 0 if count == 0 else score / count
+            questions[int(answer["question_id"])]["answer_scores"][
+                int(answer["answer_id"])] = 0 if count == 0 else score / count
 
         print("Done.")
         print("Picking top answers for questions...")
@@ -186,6 +225,8 @@ def search(query=None, answer_limit=50):
 
         return json.dumps(results)
 
+
+port = int(os.getenv('PORT', 5000))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
