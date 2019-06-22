@@ -10,13 +10,14 @@ from datetime import timedelta
 from functools import update_wrapper
 
 import networkx as nx
+import nltk
 from flask import Flask, make_response, request, current_app
 from future import standard_library
 from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_watson.natural_language_understanding_v1 import Features, KeywordsOptions, SentimentOptions
 from stackapi import StackAPI
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='frontend')
 
 standard_library.install_aliases()
 
@@ -130,7 +131,13 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
     return decorator
 
 
-@app.route("/<query>/<answer_limit>")
+@app.route("/")
+@crossdomain(origin='*')
+def root():
+    return app.send_static_file('index.html')
+
+
+@app.route("/api/<query>/<answer_limit>")
 @crossdomain(origin='*')
 def search(query=None, answer_limit=50):
     answer_limit = int(answer_limit)
@@ -182,7 +189,9 @@ def search(query=None, answer_limit=50):
                     if tag in path:
                         score = score + 1
                     tag_count = tag_count + 1
-            question_scores[int(question_b["question_id"])] = 0 if tag_count == 0 else score / tag_count
+            distance = nltk.edit_distance(query, question_b['title'])
+            question_scores[int(question_b["question_id"])] = (((1.0 / distance) if distance != 0 else 1) + (
+                0 if tag_count == 0 else score / tag_count)) / 2
 
         print("Done.")
         print("Ranking answers based on comments...")

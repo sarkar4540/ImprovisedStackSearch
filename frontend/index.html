@@ -1,75 +1,79 @@
-
 <!DOCTYPE HTML>
 <html>
 <head>
 
-	<meta content="text/html; charset=utf-8" http-equiv="content-type">
-	<title>Improvised Stack Search</title>
-	<link href="index.css" rel="stylesheet" type="text/css">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
-	<script type="text/javascript">
-  	//var url='https://stacksearchhack.eu-gb.mybluemix.net/'
-  	var url='http://192.168.0.167:5000/'
-  	$(function () {
-  		$('#search').on('click',function () {
-  			$.get(url+encodeURIComponent($('input[name=query]').val())+'/10',function(data){
-  				console.log('response:');
-  				console.log(data);
-  				arr=JSON.parse(data)
-  				results_html="";
-  				arr.forEach(function(entry,index){
-  					results_html+="<div class='entry'>"+
-  					"<div class='question_title'>"+entry.question.title+"</div>"+
-  					"<div class='answer_body'>"+entry.answer.body+"</div>"+
-  					"<div class='answer_link'><a href='https://stackoverflow.com/a/"+entry.answer.answer_id+"'>Open in stackoverflow</a></div>"+
-  					"</div>";
+    <meta content="text/html; charset=utf-8" http-equiv="content-type">
+    <title>Improvised Stack Search</title>
+    <link href="index.css" rel="stylesheet" type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script type="text/javascript">
+        //var url='https://stacksearchhack.eu-gb.mybluemix.net/'
+        var url = 'api/'
+        $(function () {
+            $('#search').on('click', function (e) {
+                if ($('#search').attr("disabled") != "true") {
+                    e.preventDefault();
+                    $('#search').attr("disabled", "true");
+                    $.get(url + encodeURIComponent($('input[name=query]').val()) + '/10', function (data) {
+                        console.log('response:');
+                        console.log(data);
+                        var arr = JSON.parse(data)
+                        var results_html = "";
+                        arr.forEach(function (entry) {
+                            results_html += "<div class='entry'>" +
+                                "<div class='question_title'>" + entry.question.title + "</div>" +
+                                "<div class='answer_body'>" + entry.answer.body + "</div>" +
+                                "<div class='answer_link'><a href='https://stackoverflow.com/a/" + entry.answer.answer_id + "'>Open in stackoverflow</a></div>" +
+                                "</div>";
 
 
-  				})
-  				$("#show_res").html(results_html);
-  				$('#div1').fadeOut();
-  				$('#resultsdiv').fadeIn();
-  			})
-  			console.log('ajax:'+url+encodeURIComponent($('input[name=query]').val())+'/10');
-  		})
-  		$('#res_close_btn').on('click',function(){
-  			$('#div1').fadeIn();
-  			$('#resultsdiv').fadeOut();
-  		})
+                        })
+                        $("#show_res").html(results_html);
+                        $('#div1').fadeOut();
+                        $('#resultsdiv').fadeIn();
+                        $('#search').removeAttr("disabled");
+                    })
+                    console.log('ajax:' + url + encodeURIComponent($('input[name=query]').val()) + '/10');
+                }
+            })
+            $('#res_close_btn').on('click', function () {
+                $('#div1').fadeIn();
+                $('#resultsdiv').fadeOut();
+            })
 
-  		$('#resultsdiv').fadeOut();
-  	})
-  </script>
+            $('#resultsdiv').fadeOut();
+        })
+    </script>
 </head>
 <body>
-	<div id="div1">
-		<h1>Improvised Stack Search</h1> <span>Stackoverflow Search Engine</span>
-		<form>
-			<input type="text" name="query" placeholder="Enter your query here...">
-			<div id="search">Search</div>
-		</form>
+<div id="div1">
+    <h1>Improvised Stack Search</h1> <span>Stackoverflow Search Engine</span>
+    <form>
+        <input type="text" name="query" placeholder="Enter your query here...">
+        <button id="search">Search</button>
+    </form>
 
-	</div>
-	<div id="resultsdiv">
-		<div id='res_close_btn'>🡄</div>
-		<div id="show_res">
-			<div class='entry'>
-				<div class='question_title'>Question Title--- jbjakfjakfnjka</div>
-				<div class='answer_body'>Answer body ----</div>
-				<div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
-			</div>
-			<div class='entry'>
-				<div class='question_title'>Question Title--- jbjakfjakfnjka</div>
-				<div class='answer_body'>Answer body ----</div>
-				<div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
-			</div>
-<div class='entry'>
-				<div class='question_title'>Question Title--- jbjakfjakfnjka</div>
-				<div class='answer_body'>Answer body ----</div>
-				<div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
-			</div>
+</div>
+<div id="resultsdiv">
+    <div id='res_close_btn'>🡄</div>
+    <div id="show_res">
+        <div class='entry'>
+            <div class='question_title'>Question Title--- jbjakfjakfnjka</div>
+            <div class='answer_body'>Answer body ----</div>
+            <div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
+        </div>
+        <div class='entry'>
+            <div class='question_title'>Question Title--- jbjakfjakfnjka</div>
+            <div class='answer_body'>Answer body ----</div>
+            <div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
+        </div>
+        <div class='entry'>
+            <div class='question_title'>Question Title--- jbjakfjakfnjka</div>
+            <div class='answer_body'>Answer body ----</div>
+            <div class='answer_link'><a href="http://stackoverflow.com">Open in stackoverflow</a></div>
+        </div>
 
-		</div>
-	</div>
+    </div>
+</div>
 </body>
 </html>
