@@ -29,7 +29,7 @@ nlu = NaturalLanguageUnderstandingV1(
 
 
 def get_keywords(sentence):
-    """Fetches the keywords of the given sentence"""
+    """Fetches the keywords of the given sentence using IBM Watson Natural Language Understanding API"""
     keywords = []
     response = nlu.analyze(
         text=sentence,
@@ -41,7 +41,7 @@ def get_keywords(sentence):
 
 
 def space_separated_elements(array):
-    """Converts the question_tags array to a space separated string"""
+    """Converts the question_tags array to a space delimited string."""
     string = ""
     for element in array:
         string = string + element + " "
@@ -50,6 +50,8 @@ def space_separated_elements(array):
 
 
 def separate_elements(array):
+    """splits the strings, delimited by whitespace, in the provided list and adds each newly formed string
+    to the returned list"""
     list_a = []
     for element in array:
         list_a.extend(element.split(" "))
@@ -57,32 +59,32 @@ def separate_elements(array):
 
 
 def get_questions_stackoverflow(query):
+    """Fetches the questions from StackAPI using the query provided"""
     stack.page_size = 50
     stack.max_pages = 1
-    """Fetches the questions from Stackoverflow API using the query provided"""
     res = stack.fetch("search/advanced", q=query, sort="relevance", accepted=True,
                       filter="withbody")
     return res
 
 
 def get_answers_stackoverflow(question_ids):
+    """Fetches the answers from StackAPI corresponding the question_ids provided"""
     stack.page_size = 100
     stack.max_pages = 1
-    """Fetches the answers from Stackoverflow API using the question_id provided"""
     res = stack.fetch("questions/{ids}/answers", ids=question_ids, sort="votes", filter="withbody")
     return res
 
 
 def get_comments_stackoverflow(answer_ids):
+    """Fetches the comments from StackAPI corresponding to the answer_ids provided"""
     stack.page_size = 100
     stack.max_pages = 1
-    """Fetches the comments from Stackoverflow API using the answer_id provided"""
     res = stack.fetch("answers/{ids}/comments", ids=answer_ids, sort="creation", filter="withbody")
     return res
 
 
 def analyse_sentiment(sentence):
-    """Calculates the compound index of the sentence using NLTK Vader SentimentAnalyser"""
+    """Calculates the compound index of the sentence using IBM Watson Natural Language Understanding API"""
     response = nlu.analyze(
         text=sentence,
         language="en",
@@ -91,6 +93,7 @@ def analyse_sentiment(sentence):
 
 
 def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_to_all=True, automatic_options=True):
+    """Allows cross domain access of the Flask route decorated with this decorator"""
     if methods is not None:
         methods = ', '.join(sorted(x.upper() for x in methods))
     if headers is not None and not isinstance(headers, str):
@@ -134,12 +137,20 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
 @app.route("/")
 @crossdomain(origin='*')
 def root():
+    """Method invoked for the root route of the Web Application"""
     return app.send_static_file('index.html')
 
 
 @app.route("/api/<query>/<answer_limit>")
 @crossdomain(origin='*')
+def searchw(query=None, answer_limit=50):
+    """Method invoked for the api route of the Web application"""
+    return search(query, answer_limit)
+
+
 def search(query=None, answer_limit=50):
+    """Searches StackOverflow for solutions corresponding to query, limited by answer_limit. Returns a list
+    of elements containing index, question and answer."""
     answer_limit = int(answer_limit)
     if query is None:
         return json.dumps({"error": "Enter a query to search."})
@@ -150,7 +161,7 @@ def search(query=None, answer_limit=50):
     if len(result_json_q["items"]) < answer_limit:
         for i in range(0, len(question_tags) - 2):
             result_json_q["items"].extend(get_questions_stackoverflow(
-                str(question_tags[i]) + " " + str(question_tags[i + 1]) + " " + str(question_tags[i + 2])))
+                str(question_tags[i]) + " " + str(question_tags[i + 1]) + " " + str(question_tags[i + 2]))["items"])
 
     print("Got " + str(len(result_json_q["items"])) + " questions... processing.")
     questions_tags = {}
@@ -193,11 +204,11 @@ def search(query=None, answer_limit=50):
             question_scores[int(question_b["question_id"])] = (((1.0 / distance) if distance != 0 else 1) + (
                 0 if tag_count == 0 else score / tag_count)) / 2
 
-        print("Done.")
-        print("Ranking answers based on comments...")
         answers = {}
         questions_sorted = sorted(question_scores, key=lambda ind: int(question_scores.get(ind) * 10000), reverse=True)[
                            :answer_limit]
+        print("Done.")
+        print("Fetching and ranking answers based on comments...")
         result_json_a = get_answers_stackoverflow(questions_sorted)
         for answer in result_json_a["items"]:
             answers[int(answer["answer_id"])] = answer
