@@ -57,7 +57,7 @@ You can use any web browser to visit `http://localhost:5000`, where
 The application is designed to run on IBM Cloud Platform without 
 any changes to code, so you can [push the code](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ml-python-flask-mnist-tutorial.html#step4),
 as is, using the CLI without any changes.
-A [live instance](http://stacksearchhack.eu-gb.mybluemix.net/) is currently running on IBM Cloud Platform,
+A [live instance](http://stacksearchhack.eu-gb.mybluemix.net/) is currently running on IBM Cloud Platform.
 
 ## Using the search panel
 
