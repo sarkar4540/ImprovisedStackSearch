@@ -14,6 +14,7 @@
                 if ($('#search').attr("disabled") != "true") {
                     e.preventDefault();
                     $('#search').attr("disabled", "true");
+                    $('#search').html('Please wait...');
                     $.get(url + encodeURIComponent($('input[name=query]').val()) + '/10', function (data) {
                         console.log('response:');
                         console.log(data);
@@ -31,6 +32,7 @@
                         $("#show_res").html(results_html);
                         $('#div1').fadeOut();
                         $('#resultsdiv').fadeIn();
+                        $('#search').html('Search');
                         $('#search').removeAttr("disabled");
                     })
                     console.log('ajax:' + url + encodeURIComponent($('input[name=query]').val()) + '/10');

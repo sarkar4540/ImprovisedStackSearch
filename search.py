@@ -210,8 +210,13 @@ def search(query=None, answer_limit=50):
         print("Done.")
         print("Fetching and ranking answers based on comments...")
         result_json_a = get_answers_stackoverflow(questions_sorted)
+        max_score = 1
         for answer in result_json_a["items"]:
             answers[int(answer["answer_id"])] = answer
+            ascore = int(answer["score"])
+            if ascore > max_score:
+                max_score = ascore
+
         result_json_c = get_comments_stackoverflow(answers.keys())
         comments = {}
         for comment in result_json_c["items"]:
@@ -222,14 +227,17 @@ def search(query=None, answer_limit=50):
 
         for answer in answers.values():
             score = 0.0
-            count = 0
+            count = 1
+            a_score = int(answer["score"])
+            accepted = bool(answer["is_accepted"])
             if int(answer["answer_id"]) in comments.keys():
                 t_comments = comments[int(answer["answer_id"])]
                 for comment in t_comments:
                     score = score + analyse_sentiment(comment["body"])
                     count = count + 1
             questions[int(answer["question_id"])]["answer_scores"][
-                int(answer["answer_id"])] = 0 if count == 0 else score / count
+                int(answer["answer_id"])] = (a_score / max_score + score / count + (
+                0.5 if accepted else 0)) / 3
 
         print("Done.")
         print("Picking top answers for questions...")
