@@ -71,7 +71,7 @@ The search panel accepts query as input and shows 10 best results.
 
 # Documentation
 
-The idea and concepts can be obtained from the [white paper](the_idea.pdf) and the method usages can be obtained from the [pydoc output](docs/search.html) of [search](search.py) module.
+The idea and concepts can be obtained from the [Ideation Document](Idea.pdf) and the method usages can be obtained from the [pydoc output](docs/search.html) of [search](search.py) module.
 
 # Dependencies
 
