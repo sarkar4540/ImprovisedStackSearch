@@ -8,6 +8,8 @@ designed to run on various Cloud Platforms with minimum changes.
 
 # Usage
 
+You can check the [video](Video_1080p.mp4) (or [720p](Video_720p.mp4)) for demonstration of the application.
+
 ## Obtaining Sources
 
 ```bash
@@ -71,7 +73,7 @@ The search panel accepts query as input and shows 10 best results.
 
 # Documentation
 
-The idea and concepts can be obtained from the [Ideation Document](Idea.pdf) and the method usages can be obtained from the [pydoc output](docs/search.html) of [search](search.py) module.
+You can check the [Presentation](Presentation.pptx) on the project to get details about it's development. The idea and concepts can be obtained from the [Ideation Document](Idea.pdf) and the method usages can be obtained from the [pydoc output](docs/search.html) of [search](search.py) module.
 
 # Dependencies
 
