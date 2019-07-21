@@ -4,7 +4,7 @@ Improvised Stack Search is an application designed primarily to
 search the [StackOverflow](http://stackoverflow.com) site using a 
 query and obtain a specific number of relevant questions, and their 
 most relevant answer. The application is written in Python and is
-designed to run on various Cloud Platforms with minimum changes.
+designed to run on various Cloud Platforms with minimum changes.The application is finally run on Flask. 
 
 # Usage
 
