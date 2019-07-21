@@ -50,7 +50,7 @@ def space_separated_elements(array):
 
 
 def separate_elements(array):
-    """splits the strings, delimited by whitespace, in the provided list and adds each newly formed string
+    """splits the strings, delimited by whitespace in the provided list and adds each newly formed string
     to the returned list"""
     list_a = []
     for element in array:
