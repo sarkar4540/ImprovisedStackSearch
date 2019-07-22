@@ -9,6 +9,7 @@ designed to run on various Cloud Platforms with minimum changes.The application 
 # Usage
 
 You can check the [video](Video_1080p.mp4) (or [720p](Video_720p.mp4)) for demonstration of the application.
+The video is available on [Youtube](https://youtu.be/IfneF2KEndI).
 
 ## Obtaining Sources
 
