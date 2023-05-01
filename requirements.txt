@@ -1,6 +1,6 @@
 stackapi
 networkx
-Flask==0.12.2
+Flask==2.3.2
 future
 ibm_watson
 nltk
